@@ -163,6 +163,72 @@ Email Delivery Service (Resend)
 Dog Owner
 ```
 
+## Folder Structure
+
+## Repository structure
+
+```
+milestones.md
+plan.md
+backend/
+  main.py
+  requirements.txt
+  app/
+    __init__.py
+    config.py
+    container.py
+    models.py
+    security.py
+    api/
+      __init__.py
+      dependencies.py
+      internal.py
+      webhooks.py
+    services/
+      __init__.py
+      firestore_repository.py
+      gingr_client.py
+      ingestion_service.py
+      reconciliation_service.py
+frontend/
+  AGENTS.md
+  CLAUDE.md
+  eslint.config.mjs
+  next-env.d.ts
+  next.config.ts
+  package.json
+  postcss.config.mjs
+  README.md
+  tsconfig.json
+  app/
+    globals.css
+    layout.tsx
+    page.tsx
+  public/
+```
+
+
+## Database design (Firestore collections)
+
+- `active_roster` — reservations/roster items (reservation_id, owner_email, dog_name, status, checked_in_at, checked_out_at)
+- `webhook_events` — raw Gingr webhook arrivals
+- `care_logs` (or part of enrichment): each care-log includes: `reservation_id`, `staff_uid`, `category`, `activity`, `notes`, `attachments` (storage refs), `created_at`.
+- `ai_email_drafts` — draft documents per reservation+date (body_html, body_text, source_log_ids, report_date, sent_at, send_status)
+- `reconciliation_runs`, `integration_errors`, `sync_runs` — operational records
+
+Notes: Firestore is schemaless; the repository uses typed models in `backend/app/models.py` as the canonical app schema.
+
+## API design (overview)
+
+- `GET /health` — health check
+- `POST /internal/daily-reports/send` — internal trigger for daily aggregation and optional send (requires `x-internal-key`)
+- `POST /ai/email-drafts/generate` — generate draft(s) for a date or reservation(s)
+- `GET /ai/email-drafts` — list drafts (staff/admin views)
+- `PATCH /ai/email-drafts/{id}` — update draft (edit body/metadata)
+- `POST /ai/email-drafts/{id}/send` — send a draft immediately
+- `GET /roster` — roster queries (active/checked_out)
+- `POST /webhooks/gingr` — webhook ingestion endpoint
+
 ## Key Features
 Gingr Integration (Extend Gingr instead of replacing it)
 - Processes check-in and check-out webhooks
